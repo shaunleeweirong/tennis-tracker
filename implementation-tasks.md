@@ -15,12 +15,13 @@ Last updated: 2026-05-14
 - `[x]` Next.js App Router scaffold, TypeScript, Tailwind, package scripts, responsive app shell.
 - `[x]` Shared domain/data layer for ratings, packages, sessions, matches, charts, collection, packs, milestones, achievements, and seeded demo data.
 - `[x]` Supabase schema foundation, RLS policies, storage bucket policy setup, catalog seed SQL, and auth/profile seed helper.
+- `[x]` Supabase-backed route handlers for sessions, coach ratings, matches, packages, goals, drills, collection, packs, profile equip, and media upload/delete.
 - `[x]` Player demo UI for dashboard, packages, sessions, matches, goals, drills, charts, and collection.
 - `[x]` Coach demo UI for linked player, pending sessions, coach rating, cancelled/no-show actions.
+- `[x]` 24 generated 128x128 transparent PNG character assets under `public/characters/`.
 - `[x]` Verification commands pass: `npm run lint`, `npm run typecheck`, `npm run build`, `node --check scripts/seed-auth-users.mjs`, `node scripts/verify-app.mjs`.
-- `[~]` API routes exist for read/demo health surfaces, but production mutations are not fully wired to Supabase route handlers yet.
-- `[~]` Media upload requirements are represented in schema, storage policies, and UI placeholders; full signed upload/playback/delete flow still needs Supabase wiring.
-- `[~]` Character collection logic and UI exist; final 128x128 PNG character art assets still need to be produced.
+- `[~]` Visible forms still use the local demo state layer; the Supabase-backed route handlers exist but are not yet used by the UI when env vars are configured.
+- `[~]` Media upload requirements are represented in schema, storage policies, API routes, and UI placeholders; full inline upload/playback/delete controls still need to be connected in the session UI.
 - `[!]` Production deployment is blocked until a real Supabase project and Vercel environment variables are provided/configured.
 
 ## Phase 0: Project Decisions And Setup

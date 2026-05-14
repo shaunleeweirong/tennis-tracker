@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "verify:app": "node scripts/verify-app.mjs",
-    "seed:auth": "node scripts/seed-auth-users.mjs"
+    "seed:auth": "node scripts/seed-auth-users.mjs",
+    "assets:characters": "node scripts/generate-character-assets.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
@@ -43,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "playwright-core": "^1.60.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

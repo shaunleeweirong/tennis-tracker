@@ -12,10 +12,12 @@ export function PixelAvatar({
   name = "Rookie",
   rarity = "default",
   size = "md",
+  src,
 }: {
   name?: string;
   rarity?: keyof typeof rarityClasses;
   size?: "sm" | "md" | "lg" | "xl";
+  src?: string;
 }) {
   const sizeClass = {
     sm: "size-12 text-sm",
@@ -34,7 +36,12 @@ export function PixelAvatar({
       ].join(" ")}
       title={name}
     >
-      <Trophy className="size-1/2 text-[var(--accent)]" />
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt="" className="size-full object-contain p-1" src={src} />
+      ) : (
+        <Trophy className="size-1/2 text-[var(--accent)]" />
+      )}
     </div>
   );
 }

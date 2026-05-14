@@ -28,6 +28,8 @@ Primary docs:
   - storage bucket policy setup
   - catalog seed SQL
   - auth/profile seed helper
+- Supabase-backed API route handlers for sessions, coach ratings, matches, packages, goals, drills, collection, packs, profile equip, and media upload/delete.
+- Generated 128x128 transparent PNG character assets under `public/characters/`.
 - Browser verification script using local Chrome.
 
 ## Local Setup
@@ -89,6 +91,7 @@ npm run lint
 npm run typecheck
 npm run build
 node --check scripts/seed-auth-users.mjs
+npm run assets:characters
 node scripts/verify-app.mjs
 ```
 
@@ -98,4 +101,4 @@ node scripts/verify-app.mjs
 
 - The visible app currently uses a local demo UI layer; server API mutation routes are not fully wired to Supabase yet.
 - Real deployment requires a Supabase project and Vercel environment variables.
-- Character image paths are represented in data/schema, but the visible UI currently uses a code-native pixel-style avatar placeholder.
+- The visible forms currently mutate local React state for demo use; connecting those forms directly to the Supabase-backed route handlers is the remaining production integration step.

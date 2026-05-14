@@ -49,7 +49,7 @@ await verifyPage("/packages", "Package history");
 await verifyPage("/goals", "Goal list");
 await verifyPage("/drills", "Drill library");
 await verifyPage("/charts", "Overall rating trend");
-await verifyPage("/collection", "Owned");
+await verifyPage("/collection", "collection progress");
 await page.screenshot({ path: "tmp/screenshots/collection-desktop.png", fullPage: true });
 
 await page.setViewportSize({ width: 390, height: 844 });

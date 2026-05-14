@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   Area,
   AreaChart,
@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/form-controls";
+import { CHARACTERS as DATA_CHARACTERS } from "@/data/characters";
 
 type SkillKey =
   | "forehand"
@@ -177,39 +178,14 @@ const defaultDrills: Drill[] = [
   { id: "repeat-sprints", name: "Repeat Court Sprints", category: "Conditioning", description: "Short recovery sprint intervals.", isSystem: true },
 ];
 
-const characterSeeds: Omit<Character, "owned" | "earnedVia">[] = [
-  ["rookie", "Rookie", "default", "New Contender", "Fresh strings. Clear eyes.", "Default character", "default"],
-  ["baseline-bolt", "Baseline Bolt", "common", "Baseliner", "Own the rally.", "Drop from Standard packs", "pack_drop"],
-  ["topspin-kid", "Topspin Kid", "common", "Heavy Hitter", "Shape buys time.", "Drop from Standard packs", "pack_drop"],
-  ["net-scout", "Net Scout", "common", "All-Court", "Take the space.", "Drop from Standard packs", "pack_drop"],
-  ["slice-smith", "Slice Smith", "common", "Counterpuncher", "Low and awkward.", "Drop from Standard packs", "pack_drop"],
-  ["serve-spark", "Serve Spark", "common", "Server", "Start points with intent.", "Drop from Standard packs", "pack_drop"],
-  ["clay-runner", "Clay Runner", "common", "Retriever", "One more ball.", "Drop from Standard packs", "pack_drop"],
-  ["return-rider", "Return Rider", "common", "Returner", "Neutralize first.", "Drop from Standard packs", "pack_drop"],
-  ["volley-vibe", "Volley Vibe", "common", "Net Player", "Hands out front.", "Drop from Standard packs", "pack_drop"],
-  ["footwork-flash", "Footwork Flash", "common", "Mover", "Arrive balanced.", "Drop from Standard packs", "pack_drop"],
-  ["moonball-mage", "Moonball Mage", "common", "Disruptor", "Height changes everything.", "Drop from Standard packs", "pack_drop"],
-  ["tiebreak-tactician", "Tiebreak Tactician", "common", "Strategist", "Simple targets, brave swings.", "Drop from Standard packs", "pack_drop"],
-  ["first-win-finisher", "First-Win Finisher", "rare", "Closer", "Remember the first one.", "Win your first match", "achievement"],
-  ["streak-sprinter", "Streak Sprinter", "rare", "Grinder", "Stack the days.", "Log a 7-day session streak", "achievement"],
-  ["eight-point-ace", "Eight-Point Ace", "rare", "Breakthrough", "Eight is a platform.", "Hit 8.0 on any skill", "achievement"],
-  ["coach-crusher", "Coach Crusher", "rare", "Self Believer", "Back your read.", "Beat coach rating by 1+ point", "achievement"],
-  ["twenty-win-pro", "Twenty-Win Pro", "rare", "Competitor", "Winning is a habit.", "Log 20 match wins", "achievement"],
-  ["monthly-matchmaker", "Monthly Matchmaker", "rare", "Match Tough", "Compete often.", "Log 5 matches in a month", "achievement"],
-  ["quarter-century-captain", "Quarter-Century Captain", "epic", "Leader", "Twenty-five sessions in.", "Reach 25 completed sessions", "session_milestone"],
-  ["fifty-session-force", "Fifty-Session Force", "epic", "Veteran", "Fifty reps of commitment.", "Reach 50 completed sessions", "session_milestone"],
-  ["spin-savant", "Spin Savant", "epic", "Artist", "Paint the court.", "Rare Better pack drop", "pack_drop"],
-  ["court-commander", "Court Commander", "epic", "Tactician", "Patterns win points.", "Rare Better pack drop", "pack_drop"],
-  ["century-champion", "Century Champion", "legendary", "Champion", "One hundred sessions strong.", "Reach 100 completed sessions", "session_milestone"],
-  ["legacy-legend", "Legacy Legend", "legendary", "Legend", "Built point by point.", "Reach 250 completed sessions", "session_milestone"],
-].map(([id, name, rarity, archetype, signatureLine, unlockConditionText, unlockConditionType]) => ({
-  id,
-  name,
-  rarity: rarity as Rarity,
-  archetype,
-  signatureLine,
-  unlockConditionText,
-  unlockConditionType: unlockConditionType as Character["unlockConditionType"],
+const characterSeeds: Omit<Character, "owned" | "earnedVia">[] = DATA_CHARACTERS.map((character) => ({
+  id: character.id,
+  name: character.name,
+  rarity: character.rarity,
+  archetype: character.archetype,
+  signatureLine: character.signature_line,
+  unlockConditionText: character.unlock_condition_text,
+  unlockConditionType: character.unlock_condition_type,
 }));
 
 const today = "2026-05-14";
@@ -339,11 +315,40 @@ function PageHeading({ title, description, action }: { title: string; descriptio
 }
 
 function BrowserChart({ children }: { children: React.ReactElement }) {
+  const isClient = useSyncExternalStore(
+    subscribeChartReady,
+    getChartReadySnapshot,
+    () => false,
+  );
+
+  if (!isClient) {
+    return <div className="h-full rounded-md bg-[var(--surface-muted)]" />;
+  }
+
   return (
     <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
       {children}
     </ResponsiveContainer>
   );
+}
+
+let chartReady = false;
+
+function subscribeChartReady(callback: () => void) {
+  if (chartReady) {
+    return () => {};
+  }
+
+  const frame = requestAnimationFrame(() => {
+    chartReady = true;
+    callback();
+  });
+
+  return () => cancelAnimationFrame(frame);
+}
+
+function getChartReadySnapshot() {
+  return chartReady;
 }
 
 function RatingGrid({
@@ -459,7 +464,12 @@ export function PlayerDashboard() {
             <CardDescription className="text-emerald-50">Current package credit count</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5 pt-5 sm:grid-cols-[auto_1fr] sm:items-center">
-            <PixelAvatar name={equipped?.name} rarity={equipped?.rarity} size="lg" />
+            <PixelAvatar
+              name={equipped?.name}
+              rarity={equipped?.rarity}
+              size="lg"
+              src={equipped ? `/characters/${equipped.id}.png` : undefined}
+            />
             <div>
               <p className="text-5xl font-semibold tracking-tight">{remaining}</p>
               <p className="mt-1 text-sm text-[var(--muted-foreground)]">of {pkg?.totalSessions ?? 0} sessions remaining</p>
@@ -924,7 +934,12 @@ export function CollectionPage() {
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {state.characters.filter((character) => character.rarity === rarity).map((character) => (
                 <div key={character.id} className="rounded-md border border-[var(--border)] p-4">
-                  <PixelAvatar name={character.name} rarity={character.rarity} size="md" />
+                  <PixelAvatar
+                    name={character.name}
+                    rarity={character.rarity}
+                    size="md"
+                    src={`/characters/${character.id}.png`}
+                  />
                   <div className={character.owned ? "mt-3" : "mt-3 opacity-45 grayscale"}>
                     <p className="font-medium">{character.owned ? character.name : "???"}</p>
                     <p className="text-sm text-[var(--muted-foreground)]">{character.archetype}</p>
