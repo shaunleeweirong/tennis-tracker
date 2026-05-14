@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import {
   Area,
   AreaChart,
@@ -37,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/form-controls";
 import { CHARACTERS as DATA_CHARACTERS } from "@/data/characters";
+import { createClient as createBrowserSupabase } from "@/lib/supabase/browser";
 
 type SkillKey =
   | "forehand"
@@ -391,6 +393,50 @@ function RatingGrid({
 
 export function LoginScreen() {
   const [state, setState] = useTrackerState();
+  const router = useRouter();
+  const [email, setEmail] = useState(state.mode === "coach" ? "coach@example.com" : "player@example.com");
+  const [password, setPassword] = useState("demo-password");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleLogin(fallbackMode: "player" | "coach") {
+    setError(null);
+    const supabase = createBrowserSupabase();
+
+    if (!supabase) {
+      setState({ ...state, mode: fallbackMode });
+      router.push(fallbackMode === "coach" ? "/coach" : "/dashboard");
+      return;
+    }
+
+    setIsPending(true);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError || !data.user) {
+      setIsPending(false);
+      setError(signInError?.message ?? "Login failed");
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    setIsPending(false);
+
+    if (profileError || !profile) {
+      setError(profileError?.message ?? "Profile missing");
+      return;
+    }
+
+    router.push(profile.role === "coach" ? "/coach" : "/dashboard");
+  }
+
   return (
     <main className="grid min-h-screen place-items-center bg-[var(--background)] px-4 py-10">
       <Card className="w-full max-w-md">
@@ -406,18 +452,19 @@ export function LoginScreen() {
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" defaultValue={state.mode === "coach" ? "coach@example.com" : "player@example.com"} />
+            <Input id="email" value={email} onChange={(event) => setEmail(event.target.value)} />
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" defaultValue="demo-password" />
+            <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
           </div>
+          {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="grid grid-cols-2 gap-3">
-            <Button asChild onClick={() => setState({ ...state, mode: "player" })}>
-              <Link href="/dashboard">Player login</Link>
+            <Button type="button" disabled={isPending} onClick={() => handleLogin("player")}>
+              Player login
             </Button>
-            <Button asChild variant="outline" onClick={() => setState({ ...state, mode: "coach" })}>
-              <Link href="/coach">Coach login</Link>
+            <Button type="button" disabled={isPending} variant="outline" onClick={() => handleLogin("coach")}>
+              Coach login
             </Button>
           </div>
         </CardContent>
